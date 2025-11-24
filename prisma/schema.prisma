@@ -1,0 +1,116 @@
+// prisma/schema.prisma
+// PostgreSQL schema for School Announcement App
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("SUPABASE_DB_URL")
+}
+
+//
+//  USER MODEL
+//
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  password  String
+  role      Role
+  teacher   Teacher?
+  createdAt DateTime @default(now())
+}
+
+//
+//  TEACHER MODEL
+//
+model Teacher {
+  id          String  @id @default(cuid())
+  userId      String  @unique
+  user        User    @relation(fields: [userId], references: [id])
+  phoneNumber String?
+  classes     Class[] @relation("TeacherClasses")
+}
+
+//
+//  STUDENT MODEL
+//
+model Student {
+  id            String  @id @default(cuid())
+  name          String
+  parentName    String?
+  parentEmail   String?
+  parentContact String
+  classId       String?
+  class         Class?  @relation(fields: [classId], references: [id])
+
+  attendance Attendance[] // 🔥 Added opposite relation
+}
+
+//
+//  CLASS MODEL
+//
+model Class {
+  id        String    @id @default(cuid())
+  name      String
+  teacherId String?
+  teacher   Teacher?  @relation(fields: [teacherId], references: [id], name: "TeacherClasses")
+  students  Student[]
+
+  attendance Attendance[] // 🔥 Added opposite relation
+}
+
+//
+//  MESSAGE MODEL
+//
+model Message {
+  id        String      @id @default(cuid())
+  senderId  String
+  message   String
+  type      MessageType
+  targets   String[]
+  createdAt DateTime    @default(now())
+}
+
+//
+//  MESSAGE TEMPLATE MODEL
+//
+model MessageTemplate {
+  id        String   @id @default(cuid())
+  name      String
+  content   String
+  createdAt DateTime @default(now())
+}
+
+//
+//  ATTENDANCE MODEL
+//
+model Attendance {
+  id        String   @id @default(cuid())
+  studentId String
+  classId   String
+  date      DateTime @db.Timestamptz()  // ✅ FIXED
+  present   Boolean
+
+  student Student @relation(fields: [studentId], references: [id])
+  class   Class   @relation(fields: [classId], references: [id])
+
+  @@unique([studentId, date])
+}
+
+
+//
+//  ENUMS
+//
+enum Role {
+  ADMIN
+  TEACHER
+}
+
+enum MessageType {
+  SMS
+  EMAIL
+  WHATSAPP
+}
