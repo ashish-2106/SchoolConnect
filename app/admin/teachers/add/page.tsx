@@ -52,13 +52,7 @@ export default function AddTeacherPage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-3xl font-bold">Add New Teacher</h1>
-          <p className="text-sm text-muted-foreground">
-            Fill the details below to create a new teacher.
-          </p>
-        </div>
-
-        <Button
+           <Button
           variant="outline"
           onClick={() => router.push("/admin/teachers")}
           className="flex items-center gap-2"
@@ -66,6 +60,14 @@ export default function AddTeacherPage() {
           <ArrowLeft className="h-4 w-4" />
           Back
         </Button>
+
+          <h1 className="text-3xl font-bold mt-4">Add New Teacher</h1>
+          <p className="text-sm text-muted-foreground">
+            Fill the details below to create a new teacher.
+          </p>
+        </div>
+
+       
       </div>
 
       {/* Form Card */}

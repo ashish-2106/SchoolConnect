@@ -1,7 +1,9 @@
 // app/api/attendance/route.ts
 import { NextResponse } from "next/server";
 import prisma from "@/lib/db";
-import { sendSMS, sendEmail, sendWhatsApp } from "@/lib/utils"; // adapt to your utils path
+import { sendSMS } from "@/lib/senders";
+import { sendEmail } from "@/lib/email";
+import { sendWhatsAppMessage } from "@/lib/whatsapp";
 
 export async function POST(req: Request) {
   try {
@@ -58,7 +60,7 @@ export async function POST(req: Request) {
         const msg = `Your child ${s.name} was absent on ${new Date().toLocaleDateString()}.`;
         try {
           if (notifyMethod === "EMAIL" && s.parentEmail) await sendEmail(s.parentEmail, "Absence Notice", msg);
-          else if (notifyMethod === "WHATSAPP") await sendWhatsApp(s.parentContact, msg);
+          else if (notifyMethod === "WHATSAPP") await sendWhatsAppMessage(s.parentContact, msg);
           else await sendSMS(s.parentContact, msg);
         } catch (e) {
           console.warn("Notify failure for", s.id, e);
