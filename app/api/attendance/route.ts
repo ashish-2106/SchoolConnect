@@ -2,7 +2,7 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/db";
 import { sendSMS } from "@/lib/senders";
-import { sendEmail } from "@/lib/email";
+// import { sendEmail } from "@/lib/email";
 import { sendWhatsAppMessage } from "@/lib/whatsapp";
 
 export async function POST(req: Request) {
@@ -59,8 +59,7 @@ export async function POST(req: Request) {
       for (const s of students) {
         const msg = `Your child ${s.name} was absent on ${new Date().toLocaleDateString()}.`;
         try {
-          if (notifyMethod === "EMAIL" && s.parentEmail) await sendEmail(s.parentEmail, "Absence Notice", msg);
-          else if (notifyMethod === "WHATSAPP") await sendWhatsAppMessage(s.parentContact, msg);
+          if (notifyMethod === "WHATSAPP") await sendWhatsAppMessage(s.parentContact, msg);
           else await sendSMS(s.parentContact, msg);
         } catch (e) {
           console.warn("Notify failure for", s.id, e);
