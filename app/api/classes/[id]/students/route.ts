@@ -1,12 +1,12 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/db";
 
 export async function GET(
-  req: Request,
-  context: { params: Promise<{ id: string }> }
+  _req: NextRequest,
+  context: { params: { id: string } }
 ) {
   try {
-    const { id } = await context.params;
+    const { id } = context.params;
 
     if (!id) {
       return NextResponse.json(
@@ -45,7 +45,7 @@ export async function GET(
       },
       { status: 200 }
     );
-  } catch (err: any) {
+  } catch (err) {
     console.error("❌ Error in GET /api/classes/[id]/students:", err);
     return NextResponse.json(
       { ok: false, error: "Server error" },

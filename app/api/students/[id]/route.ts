@@ -1,17 +1,10 @@
-// app/api/students/[id]/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/db";
-
-type Context = {
-  params: {
-    id: string;
-  };
-};
 
 // ✅ GET student by ID
 export async function GET(
   _req: NextRequest,
-  context: Context
+  context: { params: { id: string } }
 ) {
   const { id } = context.params;
 
@@ -33,11 +26,10 @@ export async function GET(
 // ✅ UPDATE student
 export async function PUT(
   req: NextRequest,
-  context: Context
+  context: { params: { id: string } }
 ) {
   const { id } = context.params;
   const body = await req.json();
-
   const { name, parentContact, classId } = body;
 
   const student = await prisma.student.update({
@@ -55,7 +47,7 @@ export async function PUT(
 // ✅ DELETE student
 export async function DELETE(
   _req: NextRequest,
-  context: Context
+  context: { params: { id: string } }
 ) {
   const { id } = context.params;
 
