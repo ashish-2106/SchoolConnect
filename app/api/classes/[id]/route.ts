@@ -1,4 +1,3 @@
-// app/api/classes/[id]/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/db";
 
@@ -7,10 +6,10 @@ import prisma from "@/lib/db";
 // -------------------------------
 export async function GET(
   request: NextRequest,
-  context: { params: { id: string } }
+  { params }: { params: { id: string } }
 ) {
   try {
-    const { id } = context.params;
+    const { id } = params;
 
     const klass = await prisma.class.findUnique({
       where: { id },
@@ -44,10 +43,10 @@ export async function GET(
 // -------------------------------
 export async function PUT(
   request: NextRequest,
-  context: { params: { id: string } }
+  { params }: { params: { id: string } }
 ) {
   try {
-    const { id } = context.params;
+    const { id } = params;
     const { name, teacherId } = await request.json();
 
     const updated = await prisma.class.update({
@@ -73,10 +72,10 @@ export async function PUT(
 // -------------------------------
 export async function DELETE(
   request: NextRequest,
-  context: { params: { id: string } }
+  { params }: { params: { id: string } }
 ) {
   try {
-    const { id } = context.params;
+    const { id } = params;
 
     await prisma.class.delete({ where: { id } });
 
