@@ -6,7 +6,7 @@ import prisma from "@/lib/db";
 // GET Class by ID
 // -------------------------------
 export async function GET(
-  _req: NextRequest,
+  request: NextRequest,
   context: { params: { id: string } }
 ) {
   try {
@@ -21,10 +21,7 @@ export async function GET(
     });
 
     if (!klass) {
-      return NextResponse.json(
-        { error: "Not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
     return NextResponse.json({
@@ -46,12 +43,12 @@ export async function GET(
 // UPDATE Class
 // -------------------------------
 export async function PUT(
-  req: NextRequest,
+  request: NextRequest,
   context: { params: { id: string } }
 ) {
   try {
     const { id } = context.params;
-    const { name, teacherId } = await req.json();
+    const { name, teacherId } = await request.json();
 
     const updated = await prisma.class.update({
       where: { id },
@@ -75,15 +72,13 @@ export async function PUT(
 // DELETE Class
 // -------------------------------
 export async function DELETE(
-  _req: NextRequest,
+  request: NextRequest,
   context: { params: { id: string } }
 ) {
   try {
     const { id } = context.params;
 
-    await prisma.class.delete({
-      where: { id },
-    });
+    await prisma.class.delete({ where: { id } });
 
     return NextResponse.json({ ok: true });
   } catch (err) {
