@@ -77,20 +77,34 @@ export default function AdminDashboardPage() {
     return () => unsubscribe();
   }, [router]);
 
-  // LOAD STATS
-  useEffect(() => {
-    async function loadStats() {
-      try {
-        const res = await fetch("/api/admin/stats");
-        const data = await res.json();
-        setStats(data);
-      } catch (err) {
-        console.error("Failed to load stats:", err);
-        setStats({ teachers: 0, classes: 0, students: 0, messagesSent: 0 });
-      }
+// LOAD STATS (NO CACHE – PRODUCTION SAFE)
+useEffect(() => {
+  if (!user) return;
+
+  async function loadStats() {
+    try {
+      const res = await fetch("/api/admin/stats", {
+        cache: "no-store",
+      });
+
+      if (!res.ok) throw new Error("Failed to fetch stats");
+
+      const data = await res.json();
+      setStats(data);
+    } catch (err) {
+      console.error("Failed to load stats:", err);
+      setStats({
+        teachers: 0,
+        classes: 0,
+        students: 0,
+        messagesSent: 0,
+      });
     }
-    loadStats();
-  }, []);
+  }
+
+  loadStats();
+}, [user]);
+
 
   const handleLogout = async () => {
     await signOut(auth);
@@ -199,34 +213,64 @@ export default function AdminDashboardPage() {
         </Card>
 
         {/* 🔵 PIE CHART */}
-        <Card className="border shadow-sm mt-10">
-          <CardHeader>
-            <CardTitle className="text-lg font-semibold">School Composition</CardTitle>
-          </CardHeader>
+        <Card className="border shadow-sm mt-6 sm:mt-10">
+  <CardHeader className="pb-2">
+    <CardTitle className="text-base sm:text-lg font-semibold text-center sm:text-left">
+      School Composition
+    </CardTitle>
+  </CardHeader>
 
-          <CardContent className="flex justify-center">
-            <ResponsiveContainer width="100%" height={320}>
-              <PieChart>
-                <Pie
-                  data={[
-                    { name: "Teachers", value: stats?.teachers ?? 0, fill: "#4F46E5" }, // Indigo
-                    { name: "Classes", value: stats?.classes ?? 0, fill: "#10B981" },  // Green
-                    { name: "Students", value: stats?.students ?? 0, fill: "#F59E0B" }, // Amber
-                  ]}
-                  dataKey="value"
-                  cx="50%"
-                  cy="50%"
-                  outerRadius={110}
-                  label={({ name, value }) => `${name}: ${value}`}
-                />
-                <Tooltip
-                  contentStyle={{ fontSize: 16, padding: 10 }}
-                  itemStyle={{ fontSize: 16 }}
-                />
-              </PieChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
+  <CardContent className="flex flex-col items-center">
+    {/* CHART */}
+    <div className="w-full h-[240px] sm:h-[320px]">
+      <ResponsiveContainer width="100%" height="100%">
+        <PieChart>
+          <Pie
+            data={[
+              { name: "Teachers", value: stats?.teachers ?? 0, fill: "#4F46E5" },
+              { name: "Classes", value: stats?.classes ?? 0, fill: "#10B981" },
+              { name: "Students", value: stats?.students ?? 0, fill: "#F59E0B" },
+            ]}
+            dataKey="value"
+            cx="50%"
+            cy="50%"
+            outerRadius="70%"
+            labelLine={false}
+            /* Labels only on desktop */
+            label={({ name, value }) =>
+              window.innerWidth >= 640 ? `${name}: ${value}` : ""
+            }
+          />
+          <Tooltip />
+        </PieChart>
+      </ResponsiveContainer>
+    </div>
+
+    {/* MOBILE LEGEND (shows full info clearly) */}
+    <div className="mt-4 w-full sm:hidden">
+      <div className="grid grid-cols-3 gap-2 text-xs text-center">
+        <div className="flex flex-col items-center">
+          <span className="w-3 h-3 bg-indigo-600 rounded-full mb-1"></span>
+          <span className="font-medium">Teachers</span>
+          <span>{stats?.teachers ?? 0}</span>
+        </div>
+
+        <div className="flex flex-col items-center">
+          <span className="w-3 h-3 bg-green-500 rounded-full mb-1"></span>
+          <span className="font-medium">Classes</span>
+          <span>{stats?.classes ?? 0}</span>
+        </div>
+
+        <div className="flex flex-col items-center">
+          <span className="w-3 h-3 bg-amber-500 rounded-full mb-1"></span>
+          <span className="font-medium">Students</span>
+          <span>{stats?.students ?? 0}</span>
+        </div>
+      </div>
+    </div>
+  </CardContent>
+</Card>
+
 
 
         {/* 🟦 BAR CHART */}

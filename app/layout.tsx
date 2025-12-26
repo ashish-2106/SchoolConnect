@@ -8,8 +8,8 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "SchoolConnect",
-  description: "A platform connecting schools, teachers, and students seamlessly.",
+  title: "LBS School-SchoolConnect",
+  description: "platform connecting schools, teachers, and students seamlessly.",
 };
 
 export default function RootLayout({
