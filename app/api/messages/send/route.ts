@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/db";
 import { sendSMS } from "@/lib/senders";
-import { sendWhatsAppMessage } from "@/lib/whatsapp"; // ✅ new import
+import { sendWhatsAppMessage } from "@/lib/whatsapp";
+import { renderTemplate } from "@/lib/template";
 
 export async function POST(req: Request) {
   try {
@@ -14,76 +15,93 @@ export async function POST(req: Request) {
       );
     }
 
-    let recipients: { id: string; name?: string; contact: string }[] = [];
+    let recipients: {
+      id: string;
+      name?: string;
+      contact: string;
+      className?: string | null;
+    }[] = [];
 
-    // ✅ Send to all students
+    // ✅ All students
     if (targets.includes("all")) {
-      const students = await prisma.student.findMany();
+      const students = await prisma.student.findMany({
+        include: { class: true },
+      });
+
       recipients = students.map((s) => ({
         id: s.id,
         name: s.name,
         contact: s.parentContact,
+        className: s.class?.name ?? null,
       }));
     } else {
-      // ✅ Handle specific targets (student or class)
       for (const t of targets) {
-        const student = await prisma.student.findUnique({ where: { id: t } });
+        const student = await prisma.student.findUnique({
+          where: { id: t },
+          include: { class: true },
+        });
+
         if (student) {
           recipients.push({
             id: student.id,
             name: student.name,
             contact: student.parentContact,
+            className: student.class?.name ?? null,
           });
           continue;
         }
 
         const klass = await prisma.class.findUnique({
           where: { id: t },
-          include: { students: true },
+          include: { students: { include: { class: true } } },
         });
+
         if (klass) {
           for (const s of klass.students) {
             recipients.push({
               id: s.id,
               name: s.name,
               contact: s.parentContact,
+              className: klass.name,
             });
           }
         }
       }
     }
 
-    // ✅ Deduplicate recipients by contact number
+    // ✅ Deduplicate
     const deduped = Array.from(
       new Map(recipients.map((r) => [r.contact, r])).values()
     );
 
-    const results: {
-      to: string;
-      ok: boolean;
-      error?: string | null;
-    }[] = [];
+    const results = [];
 
-    // ✅ Send message (SMS or WhatsApp)
     for (const r of deduped) {
       try {
-        let res;
+        // 🔥 APPLY TEMPLATE PER RECIPIENT
+        const finalMessage = renderTemplate(message, {
+          student_name: r.name,
+          class: r.className,
+          date: new Date(),
+        });
+
         if (type === "WHATSAPP") {
-          // send WhatsApp message (text + optional image)
-          await sendWhatsAppMessage(r.contact, message, imageUrl);
-          res = { ok: true };
+          await sendWhatsAppMessage(r.contact, finalMessage, imageUrl);
         } else {
-          // fallback to SMS
-          res = await sendSMS(r.contact, message);
+          await sendSMS(r.contact, finalMessage);
         }
 
         results.push({ to: r.contact, ok: true });
       } catch (err: any) {
-        results.push({ to: r.contact, ok: false, error: err.message });
+        results.push({
+          to: r.contact,
+          ok: false,
+          error: err.message,
+        });
       }
     }
 
-    // ✅ Log the message in DB
+    // ✅ Log rendered message
     await prisma.message.create({
       data: {
         senderId: "system",
